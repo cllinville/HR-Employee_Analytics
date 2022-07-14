@@ -1,0 +1,163 @@
+--First create a table tim import the data
+--Converted boolean columns with 0 or 1 input to 'true' or 'false' output
+CREATE TABLE employee(
+	emp_id VARCHAR(20) PRIMARY KEY NOT NULL,
+	satisfaction_level DECIMAL(5,2),
+	last_evaluation DECIMAL(5,2),
+	number_project FLOAT,
+	average_monthly_hours FLOAT,
+	time_spend_company FLOAT,
+	work_accident BOOLEAN,
+	left_company BOOLEAN,
+	promotion_last_5years BOOLEAN,
+	department VARCHAR(50),
+	salary VARCHAR(10)
+
+)
+
+--Data has been imported, now lets take a look
+SELECT * FROM employee;
+
+--Checking for duplicates
+SELECT emp_id, COUNT(emp_id) FROM employee
+GROUP BY emp_id
+HAVING COUNT(emp_id) > 1;
+
+--Checking for null values
+SELECT * FROM employee
+WHERE emp_id IS NOT NULL
+
+--No duplicates or null values found
+--Let’s start analyzing!
+
+--what is the average satisfaction level by salary
+SELECT AVG(satisfaction_level), salary FROM employee
+GROUP BY salary
+ORDER BY 2;
+
+--what is the average satisfaction level by salary of employees no longer with the company
+SELECT AVG(satisfaction_level), salary FROM employee
+WHERE left_company = TRUE
+GROUP BY salary
+ORDER BY 2;
+
+--what is the average satisfaction level by salary of employees still with the company
+SELECT AVG(satisfaction_level), salary FROM employee
+WHERE left_company = FALSE
+GROUP BY salary
+ORDER BY 2;
+
+--What is the average satisfaction level per department 
+SELECT AVG(satisfaction_level), department FROM employee
+GROUP BY department
+ORDER BY 2;
+
+--What is the average satisfaction level per department who left the company
+SELECT AVG(satisfaction_level), department FROM employee
+WHERE left_company = TRUE
+GROUP BY department
+ORDER BY 2;
+
+--What is the average satisfaction level per department who are still with the company
+SELECT AVG(satisfaction_level), department FROM employee
+WHERE left_company = FALSE
+GROUP BY department
+ORDER BY 2;
+
+--How many employees per department
+SELECT COUNT(*) AS total_employees, department FROM employee
+GROUP BY department
+ORDER BY 2;
+
+--Total employees with a low salary per department and how many left the company
+SELECT department, COUNT(*) AS total_employees, left_company FROM employee
+WHERE salary = 'low' 
+GROUP BY department, left_company
+ORDER BY 1;
+
+--Total employees with a medium salary per department and how many left the company
+SELECT department, COUNT(*) AS total_employees, left_company FROM employee
+WHERE salary = 'medium' 
+GROUP BY department, left_company
+ORDER BY 1;
+
+--Total employees with a high salary per department and how many left the company
+SELECT department, COUNT(*) AS total_employees, left_company FROM employee
+WHERE salary = 'high' 
+GROUP BY department, left_company
+ORDER BY 1;
+
+--Total employees per department who have left the company and percentages
+SELECT department, COUNT(left_company) AS left_company,
+	ROUND(COUNT(left_company) * 100 / sum(count(*))  over (),1) AS percentage_left
+	FROM employee
+WHERE left_company = TRUE
+GROUP BY department 
+ORDER BY 1;
+
+
+--Average monthly and daily hours per department still with the company
+SELECT department, CAST(AVG(average_monthly_hours) as DECIMAL(5,2)) AS average_monthly_hours,
+	AVG(average_monthly_hours) / 20 AS average_daily_hours
+FROM employee
+WHERE left_company = FALSE
+GROUP BY 1;
+
+
+--Average monthly and daily hours per department left the company
+SELECT department, CAST(AVG(average_monthly_hours) as DECIMAL(5,2)) AS average_monthly_hours,
+	AVG(average_monthly_hours) / 20 AS average_daily_hours
+FROM employee
+WHERE left_company = TRUE
+GROUP BY 1;
+
+
+--Satisfaction Level vs number of projects
+SELECT department, AVG(number_project) AS average_number_project, 
+	AVG(satisfaction_level) AS average_satisfaction_level
+	FROM employee
+GROUP BY department
+ORDER BY 1;
+
+--Average number of projects of employees who left the company
+SELECT department, CAST(AVG(number_project)as DECIMAL (2,1)) AS average_number_project FROM employee
+WHERE left_company = TRUE
+GROUP BY department
+ORDER BY 1;
+
+
+--Total and Percentage of Employees Promoted per department in the last 5 years
+SELECT department, COUNT(promotion_last_5years) AS number_of_promotions, 
+	ROUND(COUNT(promotion_last_5years) * 100.0 / SUM(COUNT(*)) over(), 1) AS percentage_promoted 
+FROM employee
+WHERE promotion_last_5years = TRUE
+GROUP BY department
+ORDER BY 1;
+
+--Average time spent commuting per department, left the company
+SELECT department, CAST(AVG(time_spend_company) as DECIMAL(2,1)) AS average_time_commuting 
+FROM employee
+WHERE left_company = TRUE
+GROUP BY department
+ORDER BY 1;
+
+--Average time spent commuting per department, still with the company
+SELECT department, CAST(AVG(time_spend_company) as DECIMAL(2,1)) AS average_time_commuting 
+FROM employee
+WHERE left_company = FALSE
+GROUP BY department
+ORDER BY 1;
+
+--Number of work accidents per department and employment status
+SELECT department, COUNT(work_accident) AS total_work_accidents, left_company
+FROM employee
+WHERE work_accident = TRUE
+GROUP BY department, left_company
+ORDER BY 1;
+
+--How many people have left the company per department
+SELECT department, COUNT(left_company) AS left_company
+FROM employee
+WHERE left_company = TRUE
+GROUP BY department
+ORDER BY 1;
